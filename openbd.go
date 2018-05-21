@@ -54,7 +54,7 @@ func (o *OpenBD) Get(isbn string) (*Book, error) {
 }
 
 // GetBooks requests multiple Book data
-func (o *OpenBD) GetBooks(isbns []string) (*[]Book, error) {
+func (o *OpenBD) GetBooks(isbns []string) ([]Book, error) {
 	if len(isbns) > maxForGetRequest {
 		return nil, errOverGetMax
 	}
@@ -99,8 +99,27 @@ func mapToBook(response []byte) (b *Book, err error) {
 	return
 }
 
-func mapToBooks(response []byte) (*[]Book, error) {
+func mapToBooks(response []byte) ([]Book, error) {
 	var b []Book
 	err := json.Unmarshal(response, &b)
-	return &b, err
+	return b, err
+}
+
+func mapToCoverage(response []byte) ([]string, error) {
+	var b []string
+	err := json.Unmarshal(response, &b)
+	return b, err
+}
+
+// Get requests single Book data
+func (o *OpenBD) GetCoverage() ([]string, error) {
+	body, err := o.requestGet(coverageAPI)
+	if err != nil {
+		return nil, errRequest
+	}
+	b, err := mapToCoverage(body)
+	if err != nil {
+		return nil, err
+	}
+	return b, nil
 }
