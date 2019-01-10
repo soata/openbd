@@ -4,8 +4,10 @@ package openbd
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"strings"
 )
 
@@ -44,7 +46,7 @@ func (o *OpenBD) Get(isbn string) (*Book, error) {
 	u := createGetURL(isbn)
 	body, err := o.requestGet(u)
 	if err != nil {
-		return nil, errRequest
+		return nil, err
 	}
 	b, err := mapToBook(body)
 	if err != nil {
@@ -58,20 +60,36 @@ func (o *OpenBD) GetBooks(isbns []string) ([]Book, error) {
 	if len(isbns) > maxForGetRequest {
 		return nil, errOverGetMax
 	}
-	u := createISBNsURL(isbns)
-	body, err := o.requestGet(u)
-	if err != nil {
-		return nil, errRequest
-	}
-	b, err := mapToBooks(body)
+	// u := createISBNsURL(isbns)
+	// body, err := o.requestGet(u)
+	u := getAPI
+	body, err := o.requestPost(u, isbns)
 	if err != nil {
 		return nil, err
+	}
+
+	b, err := mapToBooks(body)
+	if err != nil {
+		return nil, fmt.Errorf("%s \n %s", err.Error(), body)
 	}
 	return b, nil
 }
 
 func (o *OpenBD) requestGet(url string) ([]byte, error) {
 	resp, err := o.Client.Get(url)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	return ioutil.ReadAll(resp.Body)
+}
+
+func (o *OpenBD) requestPost(uri string, isbns []string) ([]byte, error) {
+
+	form := url.Values{}
+	form.Add("isbn", strings.Join(isbns, ","))
+
+	resp, err := o.Client.PostForm(uri, form)
 	if err != nil {
 		return nil, err
 	}

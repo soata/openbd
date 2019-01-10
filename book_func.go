@@ -48,7 +48,11 @@ func (b *Book) GetPubdate() (d time.Time, err error) {
 
 // GetTitle returns Title
 func (b *Book) GetTitle() string {
-	return b.Summary.Title
+	title := b.Onix.DescriptiveDetail.TitleDetail.TitleElement.TitleText.Content
+	if title == "" {
+		title = b.Summary.Title
+	}
+	return title
 }
 
 // GetSeries returns Series
@@ -120,9 +124,65 @@ func (b *Book) GetTableOfContents() string {
 // GetPages returns Pages
 func (b *Book) GetPages() (int, error) {
 	extents := b.Onix.DescriptiveDetail.Extent
-	if len(extents) > 0 {
-		pages, err := extents[0].ExtentValue.Int64()
-		return int(pages), err
+	for _, item := range extents {
+		//11:Pages
+		if item.ExtentType == "11" {
+			i, err := item.ExtentValue.Int64()
+			return int(i), err
+		}
 	}
 	return 0, errors.New("no page data")
+}
+
+func (b *Book) GetPrice() (int, error) {
+	prices := b.Onix.ProductSupply.SupplyDetail.Price
+	for _, item := range prices {
+
+		if item.PriceType == "03" || item.PriceType == "01" {
+			i, err := item.PriceAmount.Int64()
+			return int(i), err
+		}
+	}
+	return 0, errors.New("no price data")
+}
+
+// GetDescriptions returns Descriptions
+func (b *Book) GetDescriptions() (d Descriptions) {
+	tcs := b.Onix.CollateralDetail.TextContent
+	for _, item := range tcs {
+
+		if item.TextType == textTypeBrief {
+			d.ShortDescription = item.Text
+		} else if item.TextType == textTypeDescription {
+			d.Description = item.Text
+		} else if item.TextType == textJBPADescription {
+			d.JBPADescription = item.Text
+		}
+	}
+
+	return
+}
+
+func (b *Book) GetSubject() string {
+	for _, item := range b.Onix.DescriptiveDetail.Subject {
+
+		if item.SubjectSchemeIdentifier == subjectKeyword {
+			return item.SubjectHeadingText
+		}
+	}
+	return ""
+}
+
+func (b *Book) GetSubjectCode() string {
+	for _, item := range b.Onix.DescriptiveDetail.Subject {
+
+		if item.SubjectSchemeIdentifier == "78" {
+			return item.SubjectCode
+		}
+	}
+	return ""
+}
+
+func (b *Book) GetTitleCollationKey() string {
+	return b.DescriptiveDetail.TitleDetail.TitleElement.TitleText.Collationkey
 }

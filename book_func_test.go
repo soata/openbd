@@ -32,7 +32,7 @@ func TestGetter(t *testing.T) {
 	actualPubdate, _ := time.Parse("2006-01", "2016-10")
 	expectPubdate, _ := b.GetPubdate()
 	if actualPubdate != expectPubdate {
-		t.Errorf(fmt.Sprintf("GetISBN expect:%d actual:%d", expectPubdate, actualPubdate))
+		t.Errorf(fmt.Sprintf("GetISBN expect:%v actual:%v", expectPubdate, actualPubdate))
 	}
 
 	expectTitle := "みんなのGo言語 : 現場で使える実践テクニック"
@@ -82,6 +82,7 @@ func TestGetter(t *testing.T) {
 	if pages != expectPages {
 		t.Errorf(fmt.Sprintf("GetPages expect: %d actual: %d", expectPages, pages))
 	}
+
 }
 
 func TestPubdate(t *testing.T) {
