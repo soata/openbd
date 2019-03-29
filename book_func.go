@@ -186,3 +186,27 @@ func (b *Book) GetSubjectCode() string {
 func (b *Book) GetTitleCollationKey() string {
 	return b.DescriptiveDetail.TitleDetail.TitleElement.TitleText.Collationkey
 }
+
+func (b *Book) GetFormSize() string {
+	if b.Onix.DescriptiveDetail.ProductForm == "BA" {
+		return b.Onix.DescriptiveDetail.ProductFormDetail
+	}
+
+	if b.Onix.DescriptiveDetail.ProductForm == "BZ" {
+		var w, h string
+
+		for _, m := range b.Onix.DescriptiveDetail.Measure {
+
+			if m.MeasureType == "01" {
+				w = m.Measurement + m.MeasureUnitCode
+			}
+			if m.MeasureType == "02" {
+				h = m.Measurement + m.MeasureUnitCode
+			}
+		}
+
+		return w + "/" + h
+	}
+
+	return ""
+}
